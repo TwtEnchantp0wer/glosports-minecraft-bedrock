@@ -23,7 +23,7 @@ ARG MCPELAUNCHER_REF=91220f0f7ccfd460090d14056ab1bf12e82869b1
 # (_Atomic in C++ / -fpermissive diagnostics) that libc-shim and the linker use.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates git cmake make g++ clang libatomic1 pkg-config \
-        libssl-dev zlib1g-dev libpng-dev libdrm-dev \
+        libssl-dev zlib1g-dev libpng-dev libdrm-dev libgbm-dev \
         libegl1-mesa-dev libgles2-mesa-dev libudev-dev libevdev-dev \
         libasound2-dev libdbus-1-dev libzip-dev libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -53,6 +53,8 @@ RUN cmake -S /src -B /build -G "Unix Makefiles" \
         -DSDL_EXAMPLES=OFF \
         -DUSE_GAMECONTROLLERDB=OFF \
         -DENABLE_DEV_PATHS=OFF && \
+    ( grep -rqs 'define SDL_VIDEO_DRIVER_KMSDRM 1' /build/include /build/sdl3/include || \
+      { echo 'ERROR: SDL3 KMSDRM disabled (needs libdrm + gbm + EGL)'; exit 1; } ) && \
     cmake --build /build --target mcpelauncher-client -j"$(nproc)"
 
 RUN install -Dm755 /build/mcpelauncher-client/mcpelauncher-client \
