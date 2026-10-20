@@ -1,0 +1,6 @@
+# Shell scripts, Lua, Dockerfile and docs must keep LF endings: the port is
+# unpacked on a Linux device and `sh` chokes on CRLF shebangs.
+* text=auto eol=lf
+
+*.png binary
+*.zip binary
