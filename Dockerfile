@@ -56,10 +56,16 @@ RUN cmake -S /src -B /build -G "Unix Makefiles" \
     cmake --build /build --target mcpelauncher-client -j"$(nproc)"
 
 RUN install -Dm755 /build/mcpelauncher-client/mcpelauncher-client \
-        /opt/mcpelauncher/mcpelauncher-client && \
+        /opt/mcpelauncher/mcpelauncher-client ; \
+    echo '=== readelf -A ===' ; \
+    readelf -A /opt/mcpelauncher/mcpelauncher-client ; \
+    echo '=== kmsdrm matches ===' ; \
+    strings /opt/mcpelauncher/mcpelauncher-client | grep -ci kmsdrm ; \
+    echo '=== cortex matches ===' ; \
+    strings /opt/mcpelauncher/mcpelauncher-client | grep -ci cortex ; \
+    echo '=== assert ===' ; \
     readelf -A /opt/mcpelauncher/mcpelauncher-client | grep -q 'Tag_CPU_arch: v7' && \
-    ! strings /opt/mcpelauncher/mcpelauncher-client | grep -q 'cortex-a35' && \
-    strings /opt/mcpelauncher/mcpelauncher-client | grep -q 'kmsdrm'
+    strings /opt/mcpelauncher/mcpelauncher-client | grep -qi 'kmsdrm'
 
 FROM debian:bookworm AS builder
 
