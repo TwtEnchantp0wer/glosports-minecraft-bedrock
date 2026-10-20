@@ -98,7 +98,10 @@ RUN dpkg --add-architecture armhf && \
         libvorbisfile3:armhf \
         zlib1g:armhf \
         libstdc++6:armhf \
-        libgcc-s1:armhf && \
+        libgcc-s1:armhf \
+        libatomic1:armhf \
+        libssl3:armhf \
+        libpng16-16:armhf && \
     rm -rf /var/lib/apt/lists/*
 
 # --- pinned upstream inputs ------------------------------------------------
@@ -143,7 +146,10 @@ RUN mkdir -p /output/ports/minecraft-bedrock && \
     unzip -q port.zip -d /output/ports/minecraft-bedrock && \
     rm -rf /output/ports/minecraft-bedrock/mcpe_launcher/mcpelauncher/arm64 \
            /output/ports/minecraft-bedrock/mcpe_launcher/menu/update \
-           /output/ports/minecraft-bedrock/mcpe_launcher/UpdatePort.sh
+           /output/ports/minecraft-bedrock/mcpe_launcher/UpdatePort.sh \
+           /output/ports/minecraft-bedrock/mcpe_launcher/lib/armhf-system \
+           /output/ports/minecraft-bedrock/mcpe_launcher/lib/armeabi-v7a/libgbm.so.1 \
+           /output/ports/minecraft-bedrock/mcpe_launcher/lib/armeabi-v7a/libgbm.so.1.0.0
 
 COPY overlay/ /tmp/overlay/
 COPY scripts/ /tmp/scripts/
