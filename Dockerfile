@@ -34,6 +34,7 @@ RUN dpkg --add-architecture armhf && \
         libogg0:armhf \
         libogg-dev:armhf \
         libvorbisfile3:armhf \
+        zlib1g:armhf \
         libstdc++6:armhf \
         libgcc-s1:armhf && \
     rm -rf /var/lib/apt/lists/*
@@ -101,7 +102,7 @@ RUN set -eu; \
     fi; \
     for bad in libc.so.6 libm.so.6 ld-linux-armhf.so.3 libSDL2-2.0.so.0 \
                libEGL.so.1 libGLESv2.so.2 libgbm.so.1 libdrm.so.2 \
-               libfreetype.so.6 libcairo.so.2 libX11.so.6; do \
+               libfreetype.so.6 libcairo.so.2 libX11.so.6 libasound.so.2; do \
         if [ -e "$ROOT/love/lib/$bad" ]; then \
             echo "ERROR: $bad must not be bundled" >&2; exit 1; \
         fi; \

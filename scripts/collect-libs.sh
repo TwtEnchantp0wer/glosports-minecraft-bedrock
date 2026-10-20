@@ -25,6 +25,7 @@ libgbm.so.1 libdrm.so.2
 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1
 libxkbcommon.so.0 libX11.so.6 libXext.so.6 libXcursor.so.1 libXi.so.6
 libXrandr.so.2 libXss.so.1 libXfixes.so.3
+libasound.so.2
 libfreetype.so.6 libfontconfig.so.1"
 
 # The list above is written across lines; flatten it, otherwise entries at the
