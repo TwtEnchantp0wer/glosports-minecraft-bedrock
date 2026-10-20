@@ -37,6 +37,9 @@ RUN cmake -S /src -B /build -G "Unix Makefiles" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_ASM_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+        -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard" \
+        -DCMAKE_CXX_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard" \
         -DCMAKE_EXE_LINKER_FLAGS=-latomic \
         -DBUILD_UI=OFF \
         -DBUILD_WEBVIEW=OFF \
