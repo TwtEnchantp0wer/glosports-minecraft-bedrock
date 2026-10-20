@@ -63,7 +63,8 @@ Build sırasında:
 2. LÖVE 11.5 armhf + Debian bookworm armhf'ten bağımlılık kapanışı (`libluajit`,
    `libopenal`, `libmodplug`, `libmpg123`, `libvorbis`, `libtheora`, `libstdc++`…)
    `love/lib/` altına toplanır. **SDL2, glibc, EGL/GLES, gbm/drm ve freetype
-   gömülmez** — bunlar goodluckOS'tan gelir.
+   gömülmez** — bunlar goodluckOS'tan gelir. `libtheora` kaynaktan derlenir:
+   Debian'ın paketi gereksiz yere `libcairo2` (→ X11/fontconfig) çekiyor.
 3. `scripts/patch-port.sh` betikleri ash'e uyarlar (aşağıdaki bölüm).
 4. `launcher/*.puppy` ve ikon HOME köküne yerleştirilir.
 5. Lisans/notice dosyaları upstream etiketinden indirilir.

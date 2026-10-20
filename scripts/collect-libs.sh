@@ -4,6 +4,9 @@
 #
 #   collect-libs.sh <binary> <dest>
 #
+# EXTRA_LIBDIRS (optional) is searched first, e.g. a libtheora we built
+# ourselves without Debian's accidental cairo/X11 dependency.
+#
 # Blocklisted: glibc, SDL2 and the graphics stack. goodluckOS provides those
 # (Mesa Lima + Buildroot SDL2); bundling them would shadow the system ones.
 set -eu
@@ -11,7 +14,7 @@ set -eu
 BIN=${1:?usage: collect-libs.sh <binary> <dest>}
 DEST=${2:?usage: collect-libs.sh <binary> <dest>}
 
-LIBDIRS="/usr/lib/arm-linux-gnueabihf /lib/arm-linux-gnueabihf"
+LIBDIRS="${EXTRA_LIBDIRS:-} /usr/lib/arm-linux-gnueabihf /lib/arm-linux-gnueabihf"
 
 BLOCK="libc.so.6 libm.so.6 libpthread.so.0 libdl.so.2 librt.so.1 libresolv.so.2
 libnsl.so.1 libutil.so.1 libanl.so.1 libcrypt.so.1 libBrokenLocale.so.1
@@ -23,6 +26,11 @@ libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1
 libxkbcommon.so.0 libX11.so.6 libXext.so.6 libXcursor.so.1 libXi.so.6
 libXrandr.so.2 libXss.so.1 libXfixes.so.3
 libfreetype.so.6 libfontconfig.so.1"
+
+# The list above is written across lines; flatten it, otherwise entries at the
+# start/end of a line are not surrounded by spaces and the case match misses
+# them (that is how freetype and ld-linux leaked into the first build).
+BLOCK=$(printf '%s\n' "$BLOCK" | tr '\n' ' ')
 
 mkdir -p "$DEST"
 QUEUE="$BIN"

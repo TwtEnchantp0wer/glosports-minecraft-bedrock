@@ -13,7 +13,7 @@ The produced zip contains the following third-party software:
 | libmodplug | Debian bookworm armhf | Public domain | <https://modplug-xmms.sourceforge.net> |
 | mpg123 | Debian bookworm armhf | LGPL-2.1 | <https://www.mpg123.de> |
 | libogg / libvorbis | Debian bookworm armhf | BSD-3-Clause | <https://xiph.org> |
-| libtheora | Debian bookworm armhf | BSD-3-Clause | <https://xiph.org> |
+| libtheora | 1.1.1, built in the image (decoder only, no cairo/X11) | BSD-3-Clause | <https://xiph.org> |
 | libstdc++ / libgcc_s | Debian bookworm armhf (GCC 12 runtime) | GPL-3.0 with GCC Runtime Library Exception | <https://gcc.gnu.org> |
 
 The upstream release zip itself carries `licenses/`, `LEGAL.md`, `CREDITS.md`,
