@@ -1,0 +1,6 @@
+[Entry]
+CATEGORY=Ports
+NAME=Minecraft Bedrock
+DESCRIPTION=Minecraft Bedrock via mcpelauncher - bring your own APK
+ICON=/home/player/.local/share/icons/minecraft-bedrock.png
+COMMAND=env SDL_VIDEODRIVER=kmsdrm sh /home/player/ports/minecraft-bedrock/start.sh

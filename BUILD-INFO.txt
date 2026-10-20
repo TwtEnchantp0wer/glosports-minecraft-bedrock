@@ -1,0 +1,17 @@
+glOSports: Minecraft Bedrock for goodluckOS
+
+Target      : goodluckOS / GA36-MB (Allwinner A33, armhf, Mali-400 MP2, 640x480, KMSDRM)
+Upstream    : mcpelauncher-r36s 1.7.0 (GPL-3.0)
+Runtime     : LÖVE 11.5 armhf (PortMaster build) + Debian bookworm armhf libs
+Game data   : NOT included - user supplies an armeabi-v7a Minecraft Bedrock APK
+
+Layout      : HOME root overlay
+              ports/minecraft-bedrock/
+              .local/share/applications/minecraft-bedrock.puppy
+              .local/share/icons/minecraft-bedrock.png
+
+Hardware notes
+  - armhf userland: only 32-bit (armeabi-v7a) APKs can run
+  - Mali-400 has no GLES 3.0: RenderDragon based Bedrock versions are unsupported
+  - 512 MB RAM, no swap: only old/low-memory APKs are realistic
+  - system provides SDL2, glibc, EGL/GLES, gbm/drm and freetype; they are NOT bundled

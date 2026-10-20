@@ -1,0 +1,10 @@
+# PortMaster love_11.5 runtime descriptor, replaced by an in-port runtime.
+#
+# GAMEDIR is set by McpeLauncher.sh before this file is sourced.
+# SCRIPT_DIR is the port root (where McpeLauncher.sh lives).
+#
+# $LOVE_RUN is expanded unquoted by the upstream script:
+#     SDL_AUDIODRIVER=dummy $LOVE_RUN "$GAMEDIR/menu"
+# so it must stay word-splittable -> "sh <script>".
+LOVE_BINARY="$SCRIPT_DIR/love/love"
+LOVE_RUN="sh $SCRIPT_DIR/love/run-love.sh"

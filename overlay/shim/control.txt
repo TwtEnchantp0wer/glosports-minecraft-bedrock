@@ -1,0 +1,42 @@
+# PortMaster shim for goodluckOS.
+#
+# McpeLauncher.sh expects PortMaster's control.txt / device_info.txt /
+# get_controls(). goodluckOS has none of that: Puppy launches the port through
+# appctl as the "player" user, and /etc/profile.d/sdl_controller.sh already
+# exports SDL_GAMECONTROLLERCONFIG for that login shell.
+#
+# Everything here is deliberately a no-op or a constant.
+
+# No privilege escalation. doas on goodluckOS only permits appctl/poweroff/
+# reboot/evsieve/umount, so privileged lines in the upstream script must fail
+# harmlessly instead of hanging or prompting.
+ESUDO=""
+
+# Replaces PortMaster's gptokeyb. The mcpelauncher client has native gamepad
+# support and the LÖVE menu handles gamepads through love.gamepadpressed, so
+# key-to-button translation is not needed. ":" ignores its arguments.
+GPTOKEYB=":"
+
+# Where appctl sends the app's log (/dev/shm/application/application.log).
+CUR_TTY="/dev/tty1"
+
+CFW_NAME="goodluckOS"
+DEVICE_ARCH="armhf"
+
+DISPLAY_WIDTH=640
+DISPLAY_HEIGHT=480
+DISPLAY_ORIENTATION=0
+
+# goodluckOS' GA36-MB mapping, same string as /etc/profile.d/sdl_controller.sh.
+# The profile already sets SDL_GAMECONTROLLERCONFIG when the port is launched
+# from Puppy, but keep a fallback for manual runs over SSH/USB TTY.
+GA36MB_MAPPING="1900c621474133362d4d422047616d00,GA36-MB Gamepad,dpleft:b15,rightx:a2,dpright:b16,rightshoulder:b5,dpdown:b14,righty:a3,leftshoulder:b4,y:b3,x:b2,b:b0,a:b1,dpup:b13,back:b8,leftstick:b11,start:b9,lefty:a1,guide:b8,lefttrigger:b6,righttrigger:b7,rightstick:b12,leftx:a0,platform:Linux"
+sdl_controllerconfig="${SDL_GAMECONTROLLERCONFIG:-$GA36MB_MAPPING}"
+
+# The LÖVE menu runs before McpeLauncher.sh exports this (it only does so just
+# before launching the game), so make sure the menu sees the mapping too.
+export SDL_GAMECONTROLLERCONFIG="$sdl_controllerconfig"
+
+get_controls() {
+    :
+}

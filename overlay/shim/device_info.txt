@@ -1,0 +1,7 @@
+# PortMaster device_info.txt shim for goodluckOS / GA36-MB.
+# Values match the 640x480 landscape panel used by all GA36-MB variants.
+DISPLAY_WIDTH=640
+DISPLAY_HEIGHT=480
+DISPLAY_ORIENTATION=0
+DEVICE_ARCH=armhf
+CFW_NAME=goodluckOS

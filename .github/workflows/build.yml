@@ -1,0 +1,27 @@
+name: build
+
+# Builds the port zip without needing Docker locally:
+# GitHub Actions -> run -> download the "minecraft-bedrock-port" artifact.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build port zip
+        run: docker buildx build --output type=local,dest=./out .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minecraft-bedrock-port
+          path: out/minecraft-bedrock-port.zip
+          if-no-files-found: error
