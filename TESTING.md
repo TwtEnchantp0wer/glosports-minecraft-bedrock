@@ -33,6 +33,8 @@ Başarısızsa: `log.txt` içinde `love` / `libGL` / `kmsdrm` satırları.
 
 ## 3. Oyun — ilk açılış
 
+- [ ] `log.txt` içinde `Illegal instruction` **yok**
+      (varsa istemci hâlâ Cortex-A35 sürümüdür; bu pakette olmamalı)
 - [ ] Sürüm seçilince `mcpelauncher-client` başlıyor
 - [ ] Ekran siyah kalmıyor (EGL/GLES2 context)
 - [ ] Mojang logosu / ana menü görünüyor
