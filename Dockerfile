@@ -40,6 +40,7 @@ RUN cmake -S /src -B /build -G "Unix Makefiles" \
         -DSDL_KMSDRM=ON \
         -DSDL_X11=OFF \
         -DSDL_WAYLAND=OFF \
+        -DSDL_UNIX_CONSOLE_BUILD=ON \
         -DSDL_TESTS=OFF \
         -DSDL_EXAMPLES=OFF \
         -DUSE_GAMECONTROLLERDB=OFF \
