@@ -8,6 +8,50 @@
 #
 #   docker buildx build --output type=local,dest=./out .
 #
+# --- mcpelauncher-client for ARMv7 -----------------------------------------
+# Upstream ships an armhf client compiled for Cortex-A35 (ARMv8-A in AArch32
+# mode). The A33's Cortex-A7 is plain ARMv7-A, so that binary dies with
+# "Illegal instruction" (SIGILL) before it prints anything.
+# We rebuild the client natively in an armhf userland (QEMU) and let Debian's
+# default armv7 toolchain do the work. SDL3 is vendored by the project and is
+# built with the KMSDRM backend goodluckOS needs.
+FROM --platform=linux/arm/v7 debian:bookworm AS mcpelauncher-armhf
+
+ARG MCPELAUNCHER_REF=91220f0f7ccfd460090d14056ab1bf12e82869b1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates git cmake make g++ pkg-config \
+        libssl-dev zlib1g-dev libpng-dev libdrm-dev \
+        libegl1-mesa-dev libgles2-mesa-dev libudev-dev libevdev-dev \
+        libasound2-dev libdbus-1-dev libzip-dev libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/minecraft-linux/mcpelauncher-manifest /src && \
+    cd /src && \
+    git checkout "${MCPELAUNCHER_REF}" && \
+    git submodule update --init --recursive --depth 1
+
+RUN cmake -S /src -B /build -G "Unix Makefiles" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_UI=OFF \
+        -DBUILD_WEBVIEW=OFF \
+        -DGAMEWINDOW_SYSTEM=SDL3 \
+        -DUSE_SDL3_AUDIO=ON \
+        -DSDL_KMSDRM=ON \
+        -DSDL_X11=OFF \
+        -DSDL_WAYLAND=OFF \
+        -DSDL_TESTS=OFF \
+        -DSDL_EXAMPLES=OFF \
+        -DUSE_GAMECONTROLLERDB=OFF \
+        -DENABLE_DEV_PATHS=OFF && \
+    cmake --build /build --target mcpelauncher-client -j"$(nproc)"
+
+RUN install -Dm755 /build/mcpelauncher-client/mcpelauncher-client \
+        /opt/mcpelauncher/mcpelauncher-client && \
+    readelf -A /opt/mcpelauncher/mcpelauncher-client | grep -q 'Tag_CPU_arch: v7' && \
+    ! strings /opt/mcpelauncher/mcpelauncher-client | grep -q 'cortex-a35' && \
+    strings /opt/mcpelauncher/mcpelauncher-client | grep -q 'kmsdrm'
+
 FROM debian:bookworm AS builder
 
 # --- armhf build/runtime tooling -------------------------------------------
@@ -85,9 +129,15 @@ RUN mkdir -p /output/ports/minecraft-bedrock && \
 
 COPY overlay/ /tmp/overlay/
 COPY scripts/ /tmp/scripts/
+COPY --from=mcpelauncher-armhf /opt/mcpelauncher/mcpelauncher-client /tmp/mcpelauncher-client
 
 RUN set -eu; \
     ROOT=/output/ports/minecraft-bedrock; \
+    install -m 0755 /tmp/mcpelauncher-client \
+        "$ROOT/mcpe_launcher/mcpelauncher/armhf/mcpelauncher-client"; \
+    PROFILE=client sh /tmp/scripts/collect-libs.sh \
+        "$ROOT/mcpe_launcher/mcpelauncher/armhf/mcpelauncher-client" \
+        "$ROOT/mcpe_launcher/lib/armhf-system"; \
     cp /tmp/overlay/menu/main.lua "$ROOT/mcpe_launcher/menu/main.lua"; \
     cp -a /tmp/overlay/shim "$ROOT/shim"; \
     mkdir -p "$ROOT/love"; \
@@ -115,6 +165,25 @@ RUN set -eu; \
         esac; \
         if [ ! -e "$ROOT/love/lib/$n" ]; then \
             echo "ERROR: love needs $n but it is not bundled" >&2; missing=1; \
+        fi; \
+    done; \
+    CLIENT="$ROOT/mcpe_launcher/mcpelauncher/armhf/mcpelauncher-client"; \
+    arm-linux-gnueabihf-readelf -A "$CLIENT" | grep -q 'Tag_CPU_arch: v7' || { \
+        echo "ERROR: mcpelauncher-client is not ARMv7 (would SIGILL on Cortex-A7)" >&2; exit 1; }; \
+    for bad in libc.so.6 libm.so.6 ld-linux-armhf.so.3 libSDL2-2.0.so.0 \
+               libEGL.so.1 libGLESv2.so.2 libgbm.so.1 libdrm.so.2 libasound.so.2; do \
+        if [ -e "$ROOT/mcpe_launcher/lib/armhf-system/$bad" ]; then \
+            echo "ERROR: $bad must not be bundled (client)" >&2; exit 1; \
+        fi; \
+    done; \
+    for n in $(arm-linux-gnueabihf-objdump -p "$CLIENT" | awk '/NEEDED/ { print $2 }'); do \
+        case "$n" in \
+            libc.so.6|libm.so.6|libpthread.so.0|libdl.so.2|librt.so.1) continue ;; \
+            ld-linux-armhf.so.3|libEGL.so.1|libGLESv2.so.2|libgbm.so.1) continue ;; \
+            libdrm.so.2|libasound.so.2) continue ;; \
+        esac; \
+        if [ ! -e "$ROOT/mcpe_launcher/lib/armhf-system/$n" ]; then \
+            echo "ERROR: client needs $n but it is not bundled" >&2; missing=1; \
         fi; \
     done; \
     [ "$missing" = 0 ] || exit 1; \
