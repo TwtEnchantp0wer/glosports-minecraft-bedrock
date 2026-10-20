@@ -53,8 +53,9 @@ RUN cmake -S /src -B /build -G "Unix Makefiles" \
         -DSDL_EXAMPLES=OFF \
         -DUSE_GAMECONTROLLERDB=OFF \
         -DENABLE_DEV_PATHS=OFF && \
-    ( grep -rqs 'define SDL_VIDEO_DRIVER_KMSDRM 1' /build/include /build/sdl3/include || \
-      { echo 'ERROR: SDL3 KMSDRM disabled (needs libdrm + gbm + EGL)'; exit 1; } ) && \
+    ( cfg=$(grep -rls --include='SDL_build_config.h' 'define SDL_VIDEO_DRIVER_KMSDRM 1' /build | head -n 1); \
+      if [ -n "$cfg" ]; then echo "KMSDRM enabled: $cfg"; \
+      else echo 'ERROR: SDL3 KMSDRM disabled (needs libdrm + gbm + EGL)'; exit 1; fi ) && \
     cmake --build /build --target mcpelauncher-client -j"$(nproc)"
 
 RUN install -Dm755 /build/mcpelauncher-client/mcpelauncher-client \
