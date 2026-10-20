@@ -106,6 +106,7 @@ GLES 2.0 only, swap yok (zram)**.
 | GLES | Mali-400 **GLES 3.0 desteklemez**. RenderDragon tabanlı yeni sürümler (1.16.200+) sis/ışık/shader özelliklerinde patlayabilir veya siyah ekran verebilir. |
 | RAM | 512 MB. Bedrock 1.16+ genelde 700 MB–1 GB ister; **OOM/kill** beklenir. 0.14–0.15 ve 1.1.x daha gerçekçi. |
 | CPU | A33, R36S'in A53'ünden ~2–3× yavaş. R36S'te 3–4 chunk/30 FPS ise burada 1–2 chunk/10–15 FPS bekleyin. |
+| ISA | Upstream `mcpelauncher-client` **Cortex-A35 (ARMv8-A, AArch32)** için derlenmiş; A33'ün Cortex-A7'sinde `Illegal instruction` ile ölür. Bu yüzden istemci imaj içinde **ARMv7-A** için yeniden derlenir. |
 | Depolama | APK `assets/` ~200 MB–1 GB; SD'de yer açın. |
 | 64-bit | Paketteki `mcpelauncher/arm64` bilinçli olarak silinir. |
 
@@ -131,6 +132,15 @@ doğrulayın (`TESTING.md`).
 - `menu/main.lua`: `[ Update Port ]` kaldırılır (güncelleme artık imajı yeniden
   build etmek demek).
 
+Dockerfile tarafında ek olarak:
+
+- `mcpelauncher-client`, armhf bir konteynerde (QEMU) `mcpelauncher-manifest`
+  v1.8.4 kaynağından **ARMv7-A** için yeniden derlenir (SDL3 + KMSDRM).
+  Upstream'in Cortex-A35 binary'si A33'te SIGILL veriyordu.
+- İstemcinin glibc dışı bağımlılıkları (`libstdc++`, `libz`, `libpng`,
+  `libX11` zinciri, `libevdev`, `libudev`) `mcpe_launcher/lib/armhf-system/`
+  altına toplanır; EGL/GLES/gbm/drm/ALSA/SDL2 sistemden kullanılır.
+
 Ek olarak `start.sh`:
 
 - Windows/MTP kopyalamasında kaybolan `+x` bitlerini geri verir,
@@ -150,7 +160,8 @@ ports/minecraft-bedrock/
     runtimes/love_11.5/love.txt
   love/                         # gömülü LÖVE 11.5 armhf + lib/
   mcpe_launcher/
-    mcpelauncher/armhf/         # mcpelauncher-client (prebuilt, glibc 2.30 tabanı)
+    mcpelauncher/armhf/         # mcpelauncher-client (ARMv7-A, bu imajda derlenir)
+    lib/armhf-system/           # istemcinin glibc dışı .so bağımlılıkları
     menu/                       # LÖVE menüsü (main.lua patchli)
     versions/<sürüm>/           # APK'dan çıkarılan lib + assets
     Setup Apk/                  # senin APK'ların
@@ -180,6 +191,9 @@ Sık karşılaşılacak durumlar:
 - **Menü açılmıyor / siyah ekran:** `love` binary'sinin `+x` olduğundan ve
   `LD_LIBRARY_PATH`'in `love/lib` içerdiğinden emin olun; `love/lib` boşsa
   `collect-libs.sh` build sırasında uyarı vermiş olabilir.
+- **`Illegal instruction`:** eski (upstream) paketlerde istemci Cortex-A35 için
+  derlenmişti. Bu imajdaki istemci ARMv7-A'dır; yine görürseniz `file`/`readelf -A`
+  ile `Tag_CPU_arch: v7` olduğunu doğrulayın.
 - **`Exec format error`:** APK `arm64-v8a`; ARM32 APK kullanın.
 - **GLES hatası:** `MESA_GLES_VERSION_OVERRIDE` 2.0'da kalmalı; Mali-400'de 3.0
   istemek context oluşturmaz.

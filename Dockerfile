@@ -19,8 +19,10 @@ FROM --platform=linux/arm/v7 debian:bookworm AS mcpelauncher-armhf
 
 ARG MCPELAUNCHER_REF=91220f0f7ccfd460090d14056ab1bf12e82869b1
 
+# Upstream's CI builds with clang; GCC 12 rejects the bionic headers
+# (_Atomic in C++ / -fpermissive diagnostics) that libc-shim and the linker use.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates git cmake make g++ pkg-config \
+        ca-certificates git cmake make g++ clang libatomic1 pkg-config \
         libssl-dev zlib1g-dev libpng-dev libdrm-dev \
         libegl1-mesa-dev libgles2-mesa-dev libudev-dev libevdev-dev \
         libasound2-dev libdbus-1-dev libzip-dev libcurl4-openssl-dev \
@@ -33,6 +35,9 @@ RUN git clone https://github.com/minecraft-linux/mcpelauncher-manifest /src && \
 
 RUN cmake -S /src -B /build -G "Unix Makefiles" \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_EXE_LINKER_FLAGS=-latomic \
         -DBUILD_UI=OFF \
         -DBUILD_WEBVIEW=OFF \
         -DGAMEWINDOW_SYSTEM=SDL3 \
