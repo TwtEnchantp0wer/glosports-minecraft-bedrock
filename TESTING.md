@@ -2,7 +2,8 @@
 
 Her adımı sırayla işaretle. Bir adım patlarsa logları ekle:
 `ports/minecraft-bedrock/mcpe_launcher/log.txt`,
-`setup_log.txt`, `/dev/shm/application/application.log`.
+`runlog-<sürüm>.txt`, `setup_log.txt`, `/dev/shm/application/application.log`.
+Ayrıntılı tanı için `mcpe_launcher/debug.txt` oluştur (`perf.log`/`net.log`).
 
 ## 0. Ön koşullar
 
@@ -10,12 +11,14 @@ Her adımı sırayla işaretle. Bir adım patlarsa logları ekle:
 - [ ] `ports/minecraft-bedrock/` HOME kökünde
 - [ ] `love/love` ve `mcpelauncher-client` dosyaları mevcut
 - [ ] En az 2 GB boş alan (APK + assets + dünya)
-- [ ] Elinde **ARM32 (armeabi-v7a)** APK var (örn. 0.14.3)
+- [ ] Elinde **ARM32 (armeabi-v7a)** veya universal APK var.
+      Önerilen: **1.17.41**. `1.16.20.03` apksum APK'sı arm64-only olduğu için
+      A33'te kullanılamaz.
 
 ## 1. Menü (LÖVE / KMSDRM)
 
-- [ ] Puppy → Ports → Minecraft Bedrock açılıyor
-- [ ] 640×480 tam ekran, imleç yok
+- [x] Puppy → Ports → Minecraft Bedrock açılıyor
+- [x] 640×480 tam ekran, imleç yok
 - [ ] D-pad yukarı/aşağı seçim yapıyor
 - [ ] A = onay, B = geri
 - [ ] `Exit` menüyü kapatıp Puppy'e dönüyor
@@ -25,25 +28,30 @@ Başarısızsa: `log.txt` içinde `love` / `libGL` / `kmsdrm` satırları.
 ## 2. APK kurulumu
 
 - [ ] `Setup Apk` APK'yı listeliyor
-- [ ] Tek mimarili APK doğrudan kuruluyor
+- [ ] Tek mimarili (armeabi-v7a) APK doğrudan kuruluyor
 - [ ] Çift mimarili APK'da `ARM32` seçilebiliyor
-- [ ] `versions/<ad>/lib/armeabi-v7a` ve `assets/` doldu
+- [ ] Yalnızca `arm64-v8a` APK net hatayla reddediliyor
+- [ ] `versions/<ad>/lib/armeabi-v7a`, `assets/` ve `AndroidManifest.xml` doldu
+- [ ] Kurulum sonunda `sync` tamamlanıyor (log: `Setup completed`)
 - [ ] Yer bitince anlaşılır hata veriyor
 - [ ] Kurulu sürüm `X` ile silinebiliyor
 
 ## 3. Oyun — ilk açılış
 
-- [ ] `log.txt` içinde `Illegal instruction` **yok**
+- [x] `log.txt` içinde `Illegal instruction` **yok**
       (varsa istemci hâlâ Cortex-A35 sürümüdür; bu pakette olmamalı)
-- [ ] Sürüm seçilince `mcpelauncher-client` başlıyor
-- [ ] Ekran siyah kalmıyor (EGL/GLES2 context)
-- [ ] Mojang logosu / ana menü görünüyor
-- [ ] 60 sn içinde çökme yok
+- [x] Sürüm seçilince `mcpelauncher-client` başlıyor
+- [x] Ekran siyah kalmıyor (EGL/GLES2 context)
+- [x] Mojang logosu / ana menü görünüyor (`1.17.41`)
+- [x] İlk açılışta çökme yok
 - [ ] `free -m` ile RSS < 450 MB
+- [ ] `options.txt` içinde `mp_server_visible:1` ve hızlı varsayılanlar
+      (`gfx_viewdistance:48`, `gfx_msaa:0`, `gfx_vsync:0`) var
 
 ## 4. Oynanış
 
-- [ ] Yeni dünya oluşturuluyor (en düşük render distance)
+- [ ] Yeni dünya oluşturuluyor (3 chunk / `gfx_viewdistance:48`, MSAA kapalı)
+- [ ] "Building terrain"/"Loading world" birkaç dakika sürse de çökme yok
 - [ ] Sol stick yürüyor, sağ stick bakıyor
 - [ ] A/B/X/Y ve trigger'lar Bedrock eşlemesinde
 - [ ] Ses var (hoparlör; FN+DOWN ile kulaklık)
@@ -65,7 +73,10 @@ Başarısızsa: `log.txt` içinde `love` / `libGL` / `kmsdrm` satırları.
 
 ## Bilinen sınırlar
 
-- ARM64 APK desteklenmez (32-bit kullanıcı alanı).
+- ARM64 APK desteklenmez (32-bit kullanıcı alanı). `1.16.20.03` apksum APK'sı
+  yalnızca arm64-v8a içerdiği için A33'te kurulamaz/çalışmaz.
 - GLES3 / RenderDragon sürümleri Mali-400'de desteklenmez.
-- 512 MB RAM: 1.16+ sürümler büyük olasılıkla OOM.
+- 512 MB RAM: `1.17.41` ana menüye ulaştı; dünya yükleme ve uzun oyun OOM
+  açısından hâlâ riskli. 3 chunk + MSAA kapalı ile test edin.
 - Kendini güncelleme yok; güncelleme = yeni imaj build'i.
+- Tanılama döngüleri normalde kapalı; `mcpe_launcher/debug.txt` ile açılır.

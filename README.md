@@ -89,6 +89,15 @@ Build sırasında:
 4. Menüde `[ Setup Apk ]` → APK'yı seç → `ARM32` (A33 için tek seçenek).
 5. Kurulum bitince sürüm listede görünür; seç ve başlat.
 
+> **APK kontrolü:** APK'nın içinde `lib/armeabi-v7a` (veya universal) olmalı.
+> Yalnızca `arm64-v8a` içeren APK'lar kurulumda net bir hatayla reddedilir.
+> Kurulum artık `AndroidManifest.xml` dosyasını da çıkarır ve bitince `sync`
+> yapar.
+>
+> 1.17.41'de elle uygulanan `libminecraftpe.so` peer-keep yaması, `Setup Apk`'tan
+> yeniden kurulumda silinir. Asıl çökme çözümü `mp_server_visible:1`; ikili yama
+> isteğe bağlıdır.
+
 APK'yı kendiniz çıkarmanız gerekiyor: upstream `GETTING-APKS.md`
 (`ports/minecraft-bedrock/licenses/` altında da var) veya
 [mcbedrock-get](https://github.com/DankMiimer/mcbedrock-get) aracı.
@@ -102,17 +111,18 @@ GLES 2.0 only, swap yok (zram)**.
 
 | Konu | Sonuç |
 | --- | --- |
-| APK mimarisi | **Yalnızca `armeabi-v7a` (ARM32)**. `arm64-v8a` APK çalışmaz (kullanıcı alanı 32-bit). |
-| GLES | Mali-400 **GLES 3.0 desteklemez**. RenderDragon tabanlı yeni sürümler (1.16.200+) sis/ışık/shader özelliklerinde patlayabilir veya siyah ekran verebilir. |
-| RAM | 512 MB. Bedrock 1.16+ genelde 700 MB–1 GB ister; **OOM/kill** beklenir. 0.14–0.15 ve 1.1.x daha gerçekçi. |
+| APK mimarisi | **Yalnızca `armeabi-v7a` (ARM32) veya universal**. `arm64-v8a` APK çalışmaz (kullanıcı alanı 32-bit); `SetupMcpe.sh` bunu net bir hatayla reddeder. |
+| GLES | Mali-400 **GLES 3.0 desteklemez**. RenderDragon tabanlı yeni sürümler sis/ışık/shader özelliklerinde patlayabilir veya siyah ekran verebilir. |
+| RAM | 512 MB. **1.17.41 ana menüye ulaştı**; dünya yükleme ve uzun oyun sırasında OOM riski var. 3 chunk + MSAA kapalı ile deneyin; 1.6/1.1 yedek. |
+| 1.16.20 | apksum'dan gelen `1.16.20.03` APK'sı **yalnızca `arm64-v8a`** içeriyor; A33'te çalışmaz. `armeabi-v7a`/universal APK gerekir. |
 | CPU | A33, R36S'in A53'ünden ~2–3× yavaş. R36S'te 3–4 chunk/30 FPS ise burada 1–2 chunk/10–15 FPS bekleyin. |
 | ISA | Upstream `mcpelauncher-client` **Cortex-A35 (ARMv8-A, AArch32)** için derlenmiş; A33'ün Cortex-A7'sinde `Illegal instruction` ile ölür. Bu yüzden istemci imaj içinde **ARMv7-A** için yeniden derlenir. |
 | Depolama | APK `assets/` ~200 MB–1 GB; SD'de yer açın. |
 | 64-bit | Paketteki `mcpelauncher/arm64` bilinçli olarak silinir. |
 
-**Önerilen ilk test:** `0.14.3`, `0.15.10` veya `1.1.5` gibi eski bir ARM32 APK.
-Yeni sürümlerle uğraşmadan önce menünün, GLES2 context'inin ve sesin çalıştığını
-doğrulayın (`TESTING.md`).
+**Önerilen test sırası:** **1.17.41** (ana menü doğrulandı; dünya yükleme test
+ediliyor), sonra yedek olarak `1.6.0.1` / `1.1.3.1`. **1.16.20** için mutlaka
+`armeabi-v7a` veya universal APK kullanın; `arm64-v8a` sürümü A33'te çalışmaz.
 
 ---
 
@@ -132,6 +142,26 @@ doğrulayın (`TESTING.md`).
 - `menu/main.lua`: `[ Update Port ]` kaldırılır (güncelleme artık imajı yeniden
   build etmek demek).
 
+Overlay dosyaları (`overlay/`) build sonunda upstream dosyalarının üzerine
+kopyalanır; asıl cihaz düzeltmeleri buradadır:
+
+- `McpeLauncher.sh`: `-tp` (`--texture-patch`) kapalı; bayat kilit temizliği;
+  gptokeyb atlama (B tuşu oyunu kapatmasın); `netrun.sh` ile loopback;
+  ilk kurulumda `options.txt` tohumu; arm64-only sürüm reddi; `Exit` satırı
+  Puppy'e döner; menü beklenmedik kapanırsa 1.17'ye düşer; tanılama döngüleri
+  varsayılan kapalı; core dump kapalı.
+- `SetupMcpe.sh`: `AndroidManifest.xml` çıkarımı, `sync`, arm64-only APK reddi.
+- `netrun.sh`: root olmadan user+network namespace ile `lo`/dummy arayüz
+  açılışı; tek oyunculu dünya yüklemesi buna bağlı.
+- `menu/main.lua`: varsayılan **1.17**; 20 sn otomatik başlatma kaldırıldı;
+  A/B ve D-pad davranışı korunur.
+
+İlk kurulumda `options.txt` yoksa hızlı/güvenli varsayılanlar yazılır:
+`mp_server_visible:1`, `gfx_viewdistance:48` (3 chunk), `gfx_msaa:0`,
+`gfx_transparentleaves:0`, `gfx_vsync:0`, 30 FPS, async doku yükleme ve
+çok iş parçacıklı renderer kapalı, müzik kapalı. Mevcut `options.txt`
+üzerine yazılmaz.
+
 Dockerfile tarafında ek olarak:
 
 - `mcpelauncher-client`, armhf bir konteynerde (QEMU) `mcpelauncher-manifest`
@@ -140,6 +170,8 @@ Dockerfile tarafında ek olarak:
 - İstemcinin glibc dışı bağımlılıkları (`libstdc++`, `libz`, `libpng`,
   `libX11` zinciri, `libevdev`, `libudev`) `mcpe_launcher/lib/armhf-system/`
   altına toplanır; EGL/GLES/gbm/drm/ALSA/SDL2 sistemden kullanılır.
+- Overlay dosyaları (`McpeLauncher.sh`, `SetupMcpe.sh`, `netrun.sh`, menü) build
+  sonunda port ağacına kopyalanır.
 
 Ek olarak `start.sh`:
 
@@ -153,7 +185,7 @@ Ek olarak `start.sh`:
 ```
 ports/minecraft-bedrock/
   start.sh                      # Puppy'nin çağırdığı giriş noktası
-  McpeLauncher.sh               # upstream + patch
+  McpeLauncher.sh               # overlay: netrun/options/arch guard/tanılama
   shim/                         # PortMaster yerine geçen sabitler
     control.txt
     device_info.txt
@@ -162,8 +194,13 @@ ports/minecraft-bedrock/
   mcpe_launcher/
     mcpelauncher/armhf/         # mcpelauncher-client (ARMv7-A, bu imajda derlenir)
     lib/armhf-system/           # istemcinin glibc dışı .so bağımlılıkları
-    menu/                       # LÖVE menüsü (main.lua patchli)
-    versions/<sürüm>/           # APK'dan çıkarılan lib + assets
+    menu/                       # LÖVE menüsü (varsayılan 1.17)
+    versions/<sürüm>/           # APK'dan çıkarılan lib + assets + manifest
+    versions-disabled/          # (SD) uyumsuz/yedek sürümler; menü taramaz
+    netrun.sh                   # loopback/userns açıcı
+    debug.txt                   # (opsiyonel) ayrıntılı tanı
+    runlog-*.txt                # son çalışma logları
+    perf.log / net.log          # yalnızca debug.txt varsa
     Setup Apk/                  # senin APK'ların
     Import Skins/
     home/                       # oyunun HOME'u (dünyalar, ayarlar)
@@ -181,10 +218,18 @@ Oyun verisi port klasöründe kalır; `~/.local/share` kirlenmez.
 | Ne | Nerede |
 | --- | --- |
 | Başlatıcı + menü logu | `ports/minecraft-bedrock/mcpe_launcher/log.txt` |
+| Çalışma runlog'u | `ports/minecraft-bedrock/mcpe_launcher/runlog-<sürüm>.txt` |
+| Performans/net (debug) | `ports/minecraft-bedrock/mcpe_launcher/perf.log`, `net.log` |
+| Ayrıntılı tanı | `mcpe_launcher/debug.txt` (boş dosya yeterli; `MCPE_DEBUG=1`) |
 | APK kurulum logu | `ports/minecraft-bedrock/mcpe_launcher/setup_log.txt` |
 | appctl logu (stdout/stderr) | `/dev/shm/application/application.log` |
 | Mesa/Lima hataları | aynı appctl logu (`MESA_DEBUG=1` ile daha ayrıntılı) |
 | OOM | `dmesg \| grep -i oom` (USB TTY) |
+
+Normal oyunda tanılama döngüleri **kapalıdır**; SD karta 5 saniyede bir
+log/perf yazılmaz. Ayrıntılı log, perf/net örnekleri ve komut izleme için
+`mcpe_launcher/debug.txt` dosyasını oluşturun (boş olabilir). Bu dosya
+`MCPE_DEBUG=1` etkisi yapar; oyun bittikten sonra `runlog-*.txt` yine alınır.
 
 Sık karşılaşılacak durumlar:
 
@@ -194,11 +239,14 @@ Sık karşılaşılacak durumlar:
 - **`Illegal instruction`:** eski (upstream) paketlerde istemci Cortex-A35 için
   derlenmişti. Bu imajdaki istemci ARMv7-A'dır; yine görürseniz `file`/`readelf -A`
   ile `Tag_CPU_arch: v7` olduğunu doğrulayın.
-- **`Exec format error`:** APK `arm64-v8a`; ARM32 APK kullanın.
+- **`Exec format error` / "APK sadece arm64-v8a":** APK `arm64-v8a`; ARM32
+  (`armeabi-v7a`) veya universal APK kullanın. 1.16.20.03 apksum APK'sı bu
+  yüzden A33'te çalışmaz.
 - **GLES hatası:** `MESA_GLES_VERSION_OVERRIDE` 2.0'da kalmalı; Mali-400'de 3.0
   istemek context oluşturmaz.
-- **Oyun açılıp kapanıyor:** neredeyse her zaman RAM. Daha eski APK + daha düşük
-  render distance.
+- **Oyun açılıp kapanıyor:** önce `options.txt` içinde `mp_server_visible:1`
+  olduğunu kontrol edin (0 ise 1.17'de RakNet/null-peer çökmesi görülebilir).
+  Sonra RAM: daha eski APK + daha düşük render distance.
 - **Tuşlar ters:** `shim/control.txt` içindeki `sdl_controllerconfig` goodluckOS
   profilinden gelir; farklı donanımda `SDL_GAMECONTROLLERCONFIG`'i güncelleyin.
 
@@ -209,7 +257,9 @@ düzgün kaydetmez — önce oyun içi menüden çıkın.
 
 ## 8. Sonraki adımlar
 
-- [ ] Gerçek A33'te test (menü, setup, GLES2, ses, OOM eşiği).
+- [x] Gerçek A33'te menü + `1.17.41` ana menü.
+- [ ] `1.17.41` dünya yükleme/oynanış testi (3 chunk, MSAA kapalı).
+- [ ] `1.16.20` için `armeabi-v7a`/universal APK ile test (mevcut APK arm64-only).
 - [ ] Çalışan en yeni APK sürümünü tabloya işle.
 - [ ] `mcpelauncher-client` kaynaktan armhf derlenirse glibc bağımsız olur
       (şu an prebuilt, glibc 2.30 tabanı — goodluckOS'ta sorun değil).

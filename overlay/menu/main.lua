@@ -30,6 +30,11 @@ local VERDIR  = BASEDIR.."/versions"
 local APKDIR  = BASEDIR.."/Setup Apk"
 local MENUDIR = BASEDIR.."/menu"
 local CONFIRM_B = (os.getenv("MCPE_CONFIRM_SDL") or "a"):lower() == "b"
+
+local function logInput(s)
+    local f = io.open(MENUDIR.."/input.log", "a")
+    if f then f:write(os.date("%H:%M:%S").." "..s.."\n"); f:close() end
+end
 local OK_L = (os.getenv("MCPE_CONFIRM_LABEL") or "A"):upper() == "B" and "B" or "A"
 local BACK_L = OK_L == "A" and "B" or "A"
 local PORT_VERSION = ""
@@ -78,9 +83,20 @@ local function scanApks()
     return out
 end
 
+local function defaultIndex()
+    for i, v in ipairs(versions) do
+        if v:find("1-17", 1, true) or v:find("1.17", 1, true) then return i end
+    end
+    for i, v in ipairs(versions) do
+        if v:find("1.6.0.1", 1, true) then return i end
+    end
+    return 1
+end
+
 local function refresh()
     versions = scanVersions()
     apks = scanApks()
+    selMain = defaultIndex()
 end
 
 local function checkApkArchs(path)
@@ -250,6 +266,7 @@ function love.load()
 
     os.execute("mkdir -p '"..APKDIR.."'")
     refresh()
+    logInput("LOAD versions="..#versions.." apks="..#apks.." res="..W.."x"..H)
 end
 
 function love.draw()
@@ -285,8 +302,8 @@ local function moveSel(dir)
         confirmDeleteVer = nil
         local n = #versions + 2
         selMain = selMain + dir
-        if selMain < 1 then selMain = n end
-        if selMain > n then selMain = 1 end
+        if selMain < 1 then selMain = 1 end
+        if selMain > n then selMain = n end
     elseif screen == "archchoice" then
         local n = #archOptions
         if n < 1 then return end
@@ -390,6 +407,7 @@ local function goBack()
 end
 
 function love.keypressed(key)
+    logInput("KEY "..tostring(key))
     if key == "up" or key == "dpup" then
         moveSel(-1)
     elseif key == "down" or key == "dpdown" then
@@ -404,6 +422,7 @@ function love.keypressed(key)
 end
 
 function love.gamepadpressed(joystick, button)
+    logInput("PAD "..tostring(button))
     if CONFIRM_B then
         if button == "a" then button = "b" elseif button == "b" then button = "a" end
     end
@@ -411,6 +430,19 @@ function love.gamepadpressed(joystick, button)
     elseif button == "dpdown" then love.keypressed("down")
     elseif button == "a" then love.keypressed("return")
     elseif button == "x" then love.keypressed("x")
-    elseif button == "b" then love.keypressed("escape")
+    elseif button == "b" then
+        if screen == "main" then love.keypressed("return") else love.keypressed("escape") end
     end
+end
+
+function love.joystickpressed(joystick, button)
+    logInput("JOY "..tostring(button))
+end
+
+-- Otomatik secim kaldirildi: menu 20 sn sonra kendiliginden 1.17'yi
+-- baslatip kullanici surum secimini kacirabiliyordu. Launcher zaten
+-- secim yoksa 1.17'ye duser.
+
+function love.quit()
+    logInput("QUIT")
 end

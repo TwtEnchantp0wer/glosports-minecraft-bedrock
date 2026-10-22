@@ -212,6 +212,9 @@ RUN set -eu; \
     done; \
     [ "$missing" = 0 ] || exit 1; \
     sh /tmp/scripts/patch-port.sh "$ROOT"; \
+    cp /tmp/overlay/McpeLauncher.sh "$ROOT/McpeLauncher.sh"; \
+    cp /tmp/overlay/SetupMcpe.sh "$ROOT/mcpe_launcher/SetupMcpe.sh"; \
+    cp /tmp/overlay/netrun.sh "$ROOT/mcpe_launcher/netrun.sh"; \
     rm -rf /tmp/overlay /tmp/scripts
 
 # --- launcher entry + icon -------------------------------------------------

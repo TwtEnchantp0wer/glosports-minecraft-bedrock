@@ -6,7 +6,22 @@ Runtime     : LÖVE 11.5 armhf (PortMaster build) + Debian bookworm armhf libs
 Launcher    : mcpelauncher-client rebuilt for ARMv7-A (Cortex-A7) in this
               image from mcpelauncher-manifest v1.8.4 (commit 91220f0),
               SDL3 backend with KMSDRM
-Game data   : NOT included - user supplies an armeabi-v7a Minecraft Bedrock APK
+Game data   : NOT included - user supplies a Minecraft Bedrock APK
+
+APK notes
+  - only 32-bit armeabi-v7a (or universal) APKs can run
+  - an APK with only lib/arm64-v8a is rejected by SetupMcpe.sh with a clear error
+  - the 1.16.20.03 APK from apksum is arm64-only and cannot run on the A33
+  - 1.17.41 reached the main menu on the A33; world loading is still being tested
+  - AndroidManifest.xml is extracted together with lib/ and assets/; setup syncs
+
+Performance defaults (first run; an existing options.txt is not overwritten)
+  - gfx_viewdistance 48 (3 chunks), gfx_msaa 0, gfx_transparentleaves 0,
+    gfx_vsync 0, fancy graphics/skies/smooth lighting off, 30 FPS cap,
+    async texture loads/multithreaded renderer off, music off
+  - mp_server_visible 1 (RakNet startup; prevents the 1.17 null-peer crash)
+  - diagnostics (perf/net/log copy loops) are off by default; create
+    mcpe_launcher/debug.txt to enable them (MCPE_DEBUG=1)
 
 Layout      : HOME root overlay
               ports/minecraft-bedrock/
@@ -19,5 +34,5 @@ Hardware notes
     A33's Cortex-A7; that is why the client is rebuilt here for ARMv7-A
   - armhf userland: only 32-bit (armeabi-v7a) APKs can run
   - Mali-400 has no GLES 3.0: RenderDragon based Bedrock versions are unsupported
-  - 512 MB RAM, no swap: only old/low-memory APKs are realistic
+  - 512 MB RAM, no swap: low render distance / older APKs are safest
   - system provides SDL2, glibc, EGL/GLES, gbm/drm and freetype; they are NOT bundled
